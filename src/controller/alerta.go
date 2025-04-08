@@ -10,18 +10,33 @@ import (
 func DisparaAlerta(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Alerta recebido")
 
-	Play("C:\\Grafana Alerts\\alert.wav")
+	if erro := Play("C:\\Grafana Alerts\\alert.wav"); erro != nil {
+		response.JSON(w, http.StatusOK, response.Erro{Erro: erro.Error()})
+		return
+	}
 
 	response.JSON(w, http.StatusOK, response.Sucesso{Retorno: "Alerta processado"})
-
 }
 
-func Play(audio string) {
+func Play(audio string) error {
 
-	go func() {
+	erroChan := make(chan error)
+
+	go func(canal chan error) {
 		if erro := utils.PlayAudio(audio); erro != nil {
-			fmt.Errorf("Erro ao reproduzir áudio:\n %v", erro)
+			canal <- fmt.Errorf(fmt.Sprintf("Erro ao reproduzir áudio:%v", erro))
 		}
-	}()
+
+		close(canal)
+
+	}(erroChan)
+
+	var erros error
+
+	for erro := range erroChan {
+		erros = erro
+	}
+
+	return erros
 
 }
