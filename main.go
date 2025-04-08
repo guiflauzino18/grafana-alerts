@@ -4,12 +4,24 @@ import (
 	"fmt"
 	"grafan-alerts/src/service"
 	"log"
+	"os"
 
 	"golang.org/x/sys/windows/svc"
 )
 
 func main() {
-	//service.StartWebServer()
+
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "install":
+			service.InstallService()
+			return
+
+		case "uninstall":
+			service.UninstallService()
+			return
+		}
+	}
 
 	isService, erro := service.IsWindowsService()
 	if erro != nil {
